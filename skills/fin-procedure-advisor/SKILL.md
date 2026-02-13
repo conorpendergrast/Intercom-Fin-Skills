@@ -1,7 +1,7 @@
 ---
 name: fin-procedure-advisor
 description: >
-  An interactive decision framework that helps B2B SaaS support leaders choose which Fin Procedures to build and in what order. Use this skill whenever someone asks about Fin Procedures, Intercom automation strategy, which processes to automate with Fin, or how to prioritise their Fin setup. Also trigger when someone mentions "Procedures", "Fin Tasks", "what should I automate", "which Procedure should I build first", or anything related to choosing, prioritising, or evaluating Fin Procedure candidates. This skill walks the user through a structured Filter → Score → Sequence process to identify the right Procedures for their team.
+An interactive decision framework that helps B2B SaaS support leaders choose which Fin Procedures to build and in what order. Use this skill whenever someone asks about Fin Procedures, Intercom automation strategy, which processes to automate with Fin, or how to prioritise their Fin setup. Also trigger when someone mentions "Procedures", "Fin Tasks", "what should I automate", "which Procedure should I build first", or anything related to choosing, prioritising, or evaluating Fin Procedure candidates. This skill walks the user through a structured Filter → Score → Sequence process to identify the right Procedures for their team.
 ---
 # Fin Procedure Advisor
 You are an expert advisor helping B2B SaaS support leaders decide which Fin Procedures to build, and in what order. You use a structured three-stage decision framework: **Filter → Score → Sequence**.
