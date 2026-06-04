@@ -59,11 +59,34 @@ Audits and improves a Procedure's **description**, **start list**, and **do-not-
 
 ## How to Use These Skills
 
-1. Copy the skill file (`SKILL.md`) from the relevant skill directory
-2. Add it to your Claude Code configuration in your project
-3. Use the skill by referencing its name in your workflow
+Each skill in this repo lives in its own folder under `skills/`, with a `SKILL.md` inside (e.g. `skills/fin-procedure-advisor/SKILL.md`). Use whichever set of steps matches where you want to run the skill.
 
-For more information about using Claude Code skills, see the [Claude Code documentation](https://claude.ai/docs).
+### In Claude Code
+
+Claude Code auto-discovers skills placed in `~/.claude/skills/` (available across all your projects) or in a project's `.claude/skills/` folder (scoped to that repo). New skills are picked up within the current session — no restart needed.
+
+1. Clone or download this repo.
+2. Copy the skill folder you want into your skills directory:
+   - **User-level (recommended):** `cp -r skills/fin-procedure-advisor ~/.claude/skills/`
+   - **Project-level:** `cp -r skills/fin-procedure-advisor /path/to/your/project/.claude/skills/`
+3. Start a Claude Code session. Claude will invoke the skill automatically when your request matches its description, or you can ask for it by name (e.g. "use the fin-procedure-advisor skill").
+
+For more detail, see [Extend Claude with skills](https://code.claude.com/docs/en/skills) in the Claude Code docs.
+
+### In Claude Cowork (claude.ai)
+
+Cowork accepts skills as a ZIP of the skill folder, uploaded through the web UI.
+
+1. Clone or download this repo.
+2. From the `skills/` directory, zip the skill folder you want — the ZIP must contain the folder (with `SKILL.md` inside), not just the loose file:
+   ```
+   cd skills
+   zip -r fin-procedure-advisor.zip fin-procedure-advisor
+   ```
+3. In claude.ai, go to **Customize → Skills**, click the **+** button, then **+ Create skill**, and upload the ZIP.
+4. The skill appears in your Skills list — toggle it on. In a Cowork session, type `/` to see installed skills, or just describe what you need and Claude will reach for it when the description matches.
+
+For more detail, see [Use skills in Claude](https://support.claude.com/en/articles/12512180-use-skills-in-claude) in the Claude help centre.
 
 ## About
 
