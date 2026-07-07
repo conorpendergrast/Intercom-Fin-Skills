@@ -57,6 +57,21 @@ Audits and improves a Procedure's **description**, **start list**, and **do-not-
 
 **What it does:** It analyses your false positives (and optional false negatives), pinpoints overlapping intent boundaries, and proposes a revised description plus copy-pastable start and do-not-start lists (capped at 30 entries each), with the reasoning kept separate so the lists drop straight into Intercom.
 
+### 🛡️ Intercom Bulk Article Updates
+
+**Directory:** `skills/intercom-bulk-article-updates/`
+
+A safety framework and reusable scripts for reading, editing, and bulk-updating the **body** of Intercom Help Center articles via the CLI or API — without corrupting them or losing progress.
+
+**Use this skill when:**
+
+- Running a bulk or programmatic change across many articles (dead-link repoints, terminology corrections, find-and-replace)
+- Applying an audit's decisions back into the Help Center
+- Writing any code that calls `update_article` / `PUT /articles/{id}`
+- Fetching a whole Help Center's article bodies for analysis
+
+**What it does:** It enforces a four-guard write contract that makes the two silent failure modes of bulk article work un-shippable — **corruption on write** (a body shipped HTML-escaped renders its source as text) and **lost progress** (a long run dies to a rate limit or context exhaustion). It covers JSON-safe writes, a pre-write encode guard, verifying against the re-fetched stored body, reconciling parallel writers, plus resilient bulk reads (subagent fan-out, resume-by-existing-file, truncation detection, rate-limit handling) and the Intercom CLI/API gotchas that quietly break bulk jobs. Ships four reusable reference scripts (`guard_lib`, `apply_edit`, `verify_run`, `detect_corruption`).
+
 ## How to Use These Skills
 
 Each skill in this repo lives in its own folder under `skills/`, with a `SKILL.md` inside (e.g. `skills/fin-procedure-advisor/SKILL.md`). Use whichever set of steps matches where you want to run the skill.
