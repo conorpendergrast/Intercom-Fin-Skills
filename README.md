@@ -82,7 +82,9 @@ timeouts, latency false positives), and — the part health metrics alone can
 never do — audits real conversations to judge whether Fin actually used a
 connector's data correctly, with a verdict taxonomy (helped / mixed / not
 helped / unverifiable) and a subagent fan-out pattern for reading transcripts
-at scale without blowing your context budget.
+at scale without blowing your context budget. Every run ends by publishing a
+single self-contained, actionable HTML report — priority fixes first, then
+per-connector and per-conversation detail — using the included template.
 
 ### 🛡️ Intercom Bulk Article Updates
 

@@ -14,6 +14,9 @@ description: >
   fetches, output-truncation workarounds, conversation-level auditing via
   subagents) isn't obvious, and checking `success_rate` alone misses the
   failure mode that matters most: the call succeeds, but the answer is wrong.
+  Every run of this skill ends by publishing a single self-contained,
+  actionable HTML report (priority actions first, then per-connector detail)
+  — not just a chat summary.
 ---
 
 # Intercom Fin data-connector health check
@@ -122,6 +125,29 @@ Once it's actually firing, apply the full per-conversation audit from step 3
 to every conversation, not a sample, until whoever owns the connector is
 satisfied it's behaving well enough to fold back into normal steady-state
 monitoring ("graduated").
+
+### 5. Publish an actionable report every run — not just a chat summary
+
+Every run of this check should end with a single self-contained HTML report,
+not just prose in the conversation. A findings list buried in chat gets lost;
+a page someone can scan, share, and click through to the actual conversations
+sticks around. Structure it so the fixes are the headline, not an
+afterthought:
+
+- **Priority actions first**, ranked by severity, each with what happened,
+  a concrete recommendation, and deep links — not a wall of raw metrics.
+- **Connector status** for whatever's actually degraded/unhealthy.
+- **One table per watch item**, one row per conversation, with the verdict
+  taxonomy from step 3 shown as an at-a-glance pill, not prose.
+- A visible callout wherever "unverifiable" dominates a table, so nobody
+  mistakes a blind spot for a clean bill of health.
+
+`references/report-template.md` has a ready-to-adapt HTML/CSS template
+(self-contained, light/dark aware, no build step) plus a short worked
+example — reuse its structure rather than reinventing the layout each time.
+If your environment can publish HTML pages directly (e.g. Claude Code's
+Artifact tool or Claude.ai), publish it there; otherwise save it as a local
+`.html` file next to your CSV output and open it in a browser.
 
 ## Keep client-specific data out of this skill
 
