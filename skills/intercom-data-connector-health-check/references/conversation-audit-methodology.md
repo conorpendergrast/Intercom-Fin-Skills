@@ -19,7 +19,7 @@ slow, valuable part of a connector audit, not an optional extra.
 
 Always pull the distinct `conversation_id`s a connector fired in, not just
 its raw execution count. One conversation can legitimately call a connector
-many times in a row — a host pasting a batch of ten reservation codes at
+many times in a row — a customer pasting a batch of ten order numbers at
 once, for instance, or a long back-and-forth where each new customer message
 triggers a fresh lookup. A raw count of "40 executions" might mean 40
 distinct customers, or it might mean 3 customers and one conversation that
@@ -97,7 +97,7 @@ When one conversation accounts for an outsized share of a connector's calls,
 work out why before assuming it's a bug:
 
 - **Legitimate:** the customer supplied multiple distinct identifiers
-  (several reservation codes, several tasks) in one or a few messages, and
+  (several order numbers, several tasks) in one or a few messages, and
   the call count matches the number of distinct identifiers, or matches new
   follow-up questions arriving over time. This is normal, healthy usage.
 - **Worth flagging:** the same identifier is queried repeatedly,

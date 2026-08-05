@@ -15,9 +15,10 @@ formed, they're just being rejected by the backend it's calling.
 
 **Common root causes, in roughly the order to check them:**
 - The identity Fin passed doesn't resolve to a real account on the backend
-  side — a guest identity being used against a host-scoped endpoint, a
-  teammate identity where the endpoint expects an owner, or similar
-  role/endpoint mismatches.
+  side — an unauthenticated or anonymous identity being used against an
+  account-owner-scoped endpoint, a delegated/staff identity where the
+  endpoint expects the primary account holder, or similar role/endpoint
+  mismatches.
 - A genuinely inactive or lapsed account (subscription cancelled, trial
   expired) where the rejection is actually correct behaviour, not a bug.
 - **The trap:** don't assume every instance is (2). Read the actual
@@ -29,7 +30,7 @@ formed, they're just being rejected by the backend it's calling.
   When in doubt, treat the contact attribute as unreliable and look for
   independent confirmation before writing off a 401 as "expected."
 - If the same failure signature starts appearing on *previously-fine*
-  accounts (active, paying, not just guests or trials), that's a strong
+  accounts (active, paying, not just anonymous or trial identities), that's a strong
   signal it's graduated from an edge case to a real bug worth escalating —
   track this shift explicitly when you see it.
 
