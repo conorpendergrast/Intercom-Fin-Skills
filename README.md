@@ -57,6 +57,33 @@ Audits and improves a Procedure's **description**, **start list**, and **do-not-
 
 **What it does:** It analyses your false positives (and optional false negatives), pinpoints overlapping intent boundaries, and proposes a revised description plus copy-pastable start and do-not-start lists (capped at 30 entries each), with the reasoning kept separate so the lists drop straight into Intercom.
 
+### 🩺 Intercom Data Connector Health Check
+
+**Directory:** `skills/intercom-data-connector-health-check/`
+
+Audits the live health of Intercom Fin data connectors — and, more
+importantly, whether they actually help customers, not just whether the HTTP
+call succeeds.
+
+**Use this skill when:**
+
+- Running a recurring check of your data connectors' health
+- Investigating why a connector is showing as degraded or unhealthy
+- Deciding whether a newly launched connector is ready to come off close
+  monitoring
+- Trying to work out whether a "successful" connector call actually resolved
+  a customer's question
+
+**What it does:** It pulls connector health metrics via Intercom's UI-only
+endpoints (with a batching pattern and output-truncation workaround for
+browser automation), triages failures against a catalogue of recurring
+failure signatures (auth/permission rejections, request-validation gaps,
+timeouts, latency false positives), and — the part health metrics alone can
+never do — audits real conversations to judge whether Fin actually used a
+connector's data correctly, with a verdict taxonomy (helped / mixed / not
+helped / unverifiable) and a subagent fan-out pattern for reading transcripts
+at scale without blowing your context budget.
+
 ### 🛡️ Intercom Bulk Article Updates
 
 **Directory:** `skills/intercom-bulk-article-updates/`

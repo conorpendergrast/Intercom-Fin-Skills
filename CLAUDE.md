@@ -19,6 +19,7 @@ Each lives in `skills/<name>/`:
 - **`fin-procedure-formatter`** — turns rough notes/SOPs into clean, paste-ready Fin Procedure markdown.
 - **`intercom-procedure-trigger-optimiser`** — sharpens a Procedure's description and start / do-not-start lists to cut misfires.
 - **`intercom-bulk-article-updates`** — safely reads, edits, and bulk-updates Help Center article bodies without corrupting them or losing progress.
+- **`intercom-data-connector-health-check`** — audits data connector health metrics AND whether connectors actually help customers (not just HTTP success), via UI-only endpoints and conversation-level auditing.
 
 The `README.md` documents each for end users; keep it in sync when you add or rename a skill.
 
