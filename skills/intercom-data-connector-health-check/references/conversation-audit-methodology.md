@@ -90,6 +90,13 @@ Once you have more than about three or four conversations to read:
 4. If a subagent's run fails on a transient error, just relaunch that one —
    don't let one failure block the rest, and don't silently drop it from
    your final count.
+5. Don't narrate progress in chat as each subagent's result lands ("3 more
+   in", "still waiting on 12") — that just turns a long fan-out into a wall
+   of low-value status updates. Collect silently in the background and post
+   a single message only once the whole batch is done, moving straight into
+   the synthesized findings (or the published report). A one-line "starting
+   N audits" at kickoff and a one-line "done, report published" at the end
+   is enough scaffolding around the silence.
 
 ## Same-code retry loop vs. legitimate batch
 
