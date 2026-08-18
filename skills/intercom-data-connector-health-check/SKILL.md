@@ -55,11 +55,24 @@ conversations.
   Intercom's per-request pagination and payload limits.
 - Your workspace's `app_id` (the slug in your Intercom URLs, e.g.
   `app.intercom.com/a/apps/<app_id>/...`).
-- A place to keep client-specific state privately. **This skill is written to
-  be workspace-agnostic on purpose — see "Keep client-specific data out of
-  this skill" below before you run it against a real workspace.**
+- A local state file for this workspace, kept **outside this repo**. **This
+  skill is written to be workspace-agnostic on purpose — see "Keep
+  client-specific data out of this skill" below before you run it against a
+  real workspace.**
 
 ## Workflow
+
+### 0. Load or create your local state file
+
+Every run reads from and writes to a plain markdown file, one per workspace,
+at a conventional location such as `~/.intercom-connector-health/<app_id>.md`
+— not this repo, and not a memory/notes system, since the point is a single
+predictable file the skill itself owns and updates every run. If it doesn't
+exist yet, create it from `references/state-file-template.md`. It holds the
+`app_id`, your connector ID→name/purpose mapping, current watch items, and
+the running findings log — use it to pick up where the last run left off
+(what's already a watch item, what's already been triaged) rather than
+starting cold.
 
 ### 1. Pull the full connector list and 24h health for all of them
 
@@ -85,8 +98,9 @@ aggregate rate. Failure signatures repeat across connectors and across weeks;
 recognising (auth/permission rejections, request-validation gaps, timeouts,
 and the specific "flagged degraded on a single low-latency sample" false
 positive that isn't worth chasing). Match what you see against that list
-before assuming a new bug — and log genuinely new patterns somewhere private
-so you (or whoever runs this next) recognise them faster next time.
+before assuming a new bug — and log genuinely new patterns in your local
+state file's "Locally observed failure signatures" section so you (or
+whoever runs this next) recognise them faster next time.
 
 ### 3. For any connector under closer scrutiny, audit real conversations
 
@@ -107,6 +121,10 @@ subagents so long transcripts don't blow your context budget, is in
 - Always report per-conversation with deep links back into Intercom, not just
   aggregate counts. A number without a way to go look at the transcript isn't
   actionable.
+- Record each notable finding in your local state file's running findings
+  log as you go, and check it first for what's already been triaged on a
+  repeat run — that's what keeps a second pass from re-litigating the same
+  conversations.
 
 ### 4. Track newly launched connectors as "watch items"
 
@@ -124,7 +142,10 @@ auditing conversations, because they're common false starts:
 Once it's actually firing, apply the full per-conversation audit from step 3
 to every conversation, not a sample, until whoever owns the connector is
 satisfied it's behaving well enough to fold back into normal steady-state
-monitoring ("graduated").
+monitoring ("graduated"). Add it to the "Watch items" table in your local
+state file when you start watching it, and update its status/graduation
+criteria as the audit progresses — that table is what tells a future run
+which connectors still need the full treatment.
 
 ### 5. Publish an actionable report every run — not just a chat summary
 
@@ -154,10 +175,11 @@ Artifact tool or Claude.ai), publish it there; otherwise save it as a local
 This skill is published in a public repo and deliberately contains no real
 workspace slugs, connector IDs, deviceIds, or findings — those are exactly
 the kind of detail that shouldn't live in a shared, public file. When you use
-this skill against a real workspace, keep the following **outside** this
-skill folder, in whatever private notes system you use (a gitignored local
-file, a private memory store, an internal wiki page — anything not committed
-to a public repo):
+this skill against a real workspace, everything client-specific belongs in
+your local state file (see "Step 0" above), **outside this repo entirely** —
+not gitignored inside it, and not in a general-purpose memory or notes
+system. A dedicated file the skill owns is easy to find on the next run, easy
+to grep, and there's no ambiguity about what it's for or where it lives:
 
 - Your workspace's `app_id`/slug.
 - Any browser-pairing identifier your automation tool assigns (these are
@@ -169,9 +191,8 @@ to a public repo):
   conversations you've found. Feed genuinely *general* patterns back into
   `references/known-failure-patterns.md` if you think they'd help others, but
   keep the client-identifying specifics (customer names, account IDs,
-  conversation contents) private.
+  conversation contents) in your local state file only.
 
-If you're setting this up fresh, the fastest private store is usually
-whatever persistent-memory or notes mechanism your AI tooling already offers
-per-project — that keeps the client data scoped to where you're actually
-working without inventing a new system.
+Use `references/state-file-template.md` to set one up for a new workspace —
+copy it to `~/.intercom-connector-health/<app_id>.md` (or wherever you keep
+this kind of local state) and fill it in.
