@@ -118,6 +118,19 @@ subagents so long transcripts don't blow your context budget, is in
   actually reference specific data the connector returned, was that data
   correct, and was the customer's problem actually resolved — not just was
   the HTTP status 200.
+- **Falsify before you report.** Every "not helped / wrong" verdict goes
+  through `references/falsification.md` first — rule out the benign
+  explanation, then name evidence that didn't come from your own reading of
+  the transcript. Uncorroborated fault verdicts get verified by you or
+  downgraded to unverifiable; they never reach the report as findings. This
+  is the highest-value step in the audit, because anomaly-hunting produces
+  false findings that all run the same direction, so they compound rather
+  than cancel.
+- **When you dismiss a finding as by-design, record it.** Add a row to your
+  state file's expected-behaviour registry naming what the connector is
+  expected to do and what would still count as a finding. The registry starts
+  empty for every workspace and is only worth having if filling it is part of
+  the run rather than a chore someone remembers.
 - Always report per-conversation with deep links back into Intercom, not just
   aggregate counts. A number without a way to go look at the transcript isn't
   actionable.
@@ -157,6 +170,10 @@ afterthought:
 
 - **Priority actions first**, ranked by severity, each with what happened,
   a concrete recommendation, and deep links — not a wall of raw metrics.
+- **Only corroborated findings may rank.** A finding resting solely on
+  someone's reading of the automation's wording belongs in the tables, not in
+  the ranked actions. State how many were downgraded for lack of evidence, so
+  a clean run and an under-evidenced one don't look identical.
 - **Connector status** for whatever's actually degraded/unhealthy.
 - **One table per watch item**, one row per conversation, with the verdict
   taxonomy from step 3 shown as an at-a-glance pill, not prose.
