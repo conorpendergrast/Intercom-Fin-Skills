@@ -97,3 +97,24 @@ between what fired and what was asked, not the connector failing. It becomes
 a real concern when the customer clearly expects specific data to exist (they
 named a specific record, amount, or date) and still gets an empty result —
 that's worth escalating as a genuine data-availability or matching bug.
+
+## Body-level failure on an invalid identifier
+
+**Signature:** `http_status: 200`, `success: true`, but the response body
+carries its own failure envelope — something shaped like
+`{"status": "failure", "data": null}`. Scanning for this is a genuinely
+useful technique: it surfaces real faults that the transport-level status
+hides, and a connector's headline success rate will never show them.
+
+**The trap:** the identical signature is produced by a connector *correctly*
+reporting "no such record" for an identifier that doesn't exist. Customers
+mistype record IDs, drop prefixes, and paste the wrong reference constantly,
+often correcting themselves a message or two later. A body-level failure
+against a bad identifier is the connector working, not a masked fault.
+
+**What to check before counting one:** whether the identifier in the request
+was valid at that moment in the conversation. Pull the request body alongside
+the response, and read the thread for what the customer actually supplied and
+when. Count only those where a *valid* identifier got a failure envelope back
+— those are the real masked failures, and they usually indicate a backend or
+account-scoping fault worth escalating.
