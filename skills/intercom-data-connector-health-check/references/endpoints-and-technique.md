@@ -59,6 +59,47 @@ they fail validation *inside* Intercom before ever calling out), and `id`
 per call — or a browser-automation JS-exec tool may hit its own timeout
 before the fetch loop finishes.
 
+## Don't leave the response bodies on the table
+
+This endpoint is easy to think of as "the failure log" and fetch only when
+something is already degraded. It is not — it is the **execution** log, it
+returns successful calls too, and `response_body` / `raw_response_body` carry
+**the actual payload the connector returned**, paired with the
+`request_body` that asked for it.
+
+That matters more than anything else in this file, because the conversation
+audit's biggest blind spot is "the call succeeded and I cannot see what came
+back." The transcript genuinely does not show you the payload — but this
+endpoint does, and it is the same fetch you are already making. Pull bodies
+for every watch-item execution in your window **before** you read a single
+transcript:
+
+```js
+const rows = await logs(connectorId, 24);  // the paginated fetch above
+rows.forEach(r => {
+  const body = r.raw_response_body || r.response_body || '';
+  const req  = r.request_body || '';
+  // group by r.conversation_id; note which calls returned real data
+  // and which returned an empty collection
+});
+```
+
+Two questions this answers immediately, neither of which a transcript can:
+
+- **Was the payload empty?** An empty collection is a *correct negative* for
+  a record that genuinely has nothing to return, and it explains at a stroke
+  why a reply cited nothing specific. Without this you will record
+  "unverifiable" and, worse, may write up "the connector's output never
+  reaches replies" when the truth is there was no output to reach them.
+- **What identifier was actually queried?** `request_body` shows you whether
+  repeated calls re-queried one identifier (worth a look) or worked through
+  several distinct ones (a legitimate batch), and whether the identifier Fin
+  used was one the customer actually supplied.
+
+A payload also satisfies the corroboration bar in
+`references/falsification.md` on its own, so pulling bodies first converts
+verdicts that would have been interpretive into evidenced ones.
+
 ## Batching across many connectors
 
 A workspace can easily have 50–100+ connectors. Fetching health metrics for
