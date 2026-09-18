@@ -32,6 +32,19 @@ Copy the structure below for a new workspace and fill it in as you go.
 |---|---|---|---|
 | conn_123 | Order Status Lookup | Checks order status by order number | |
 
+## Expected behaviour (what is *not* a finding)
+
+Connectors whose firing pattern looks anomalous but is by design — a
+best-effort repair, a pre-fetch, anything built to fire speculatively.
+Checklist item 4 in `references/falsification.md` reads this table before
+calling a pattern a bug. Add a row every time you dismiss a finding on these
+grounds; the table starts empty and is only worth having if filling it is
+part of the run.
+
+| Connector ID | Expected behaviour | Not a finding | Still a finding |
+|---|---|---|---|
+| conn_456 | Best-effort repair, fires speculatively on every record touch | Unrequested or undisclosed calls; high call volume | Returns success but changes nothing, and the automation then tells the customer no action is needed |
+
 ## Watch items (newly launched / under closer scrutiny)
 
 Connectors here get every conversation audited, not a sample, until
