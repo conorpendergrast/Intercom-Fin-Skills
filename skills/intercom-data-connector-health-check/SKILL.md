@@ -113,6 +113,14 @@ subagents so long transcripts don't blow your context budget, is in
 - Get the distinct conversation IDs the connector fired in during your
   window — not the raw execution count, which can hugely overstate distinct
   customer impact if one conversation looped the connector many times.
+- **Pull the response bodies first, before you read any transcript.** The
+  execution log carries `response_body` for successful calls, not just failed
+  ones, alongside the `request_body` that asked for them — so the payload you
+  cannot see in a transcript is one fetch away, and it's a fetch you're
+  already making. Note per conversation which calls returned real data and
+  which returned an empty collection. Skipping this is how an audit ends up
+  reporting "the connector's output never reaches replies" when most of those
+  calls had no output to reach them.
 - Read each conversation (or fan reads out to subagents in parallel once you
   have more than a handful) and answer, for each one: did Fin's reply
   actually reference specific data the connector returned, was that data
