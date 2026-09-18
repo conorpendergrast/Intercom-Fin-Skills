@@ -56,18 +56,46 @@ be quietly collapsed into either extreme:
   your corroborating source. If you have none, return **unverifiable**
   instead — an uncorroborated fault verdict is the commonest way this audit
   produces a finding that collapses on inspection.
-- **Unverifiable.** The connector call succeeded, but the transcript export
-  doesn't expose the actual response payload — many conversation-export
-  formats only log a bare `{"action": {"name": ..., "result": "success"}}"`
-  marker for tool calls, not the body. If Fin's very next reply is generic
-  and never cites anything specific, you cannot tell from the transcript
-  alone whether that's because the data was empty/unhelpful or because Fin
-  simply didn't use good data. **Report this as its own category rather than
-  guessing** — collapsing it into "not helped" overstates confidence, and
-  collapsing it into "helped" understates a real blind spot. If this
-  category dominates your results for a connector, say so explicitly and
-  recommend checking the connector's raw response via its actual backend
-  logs, not just Intercom's export.
+- **Unverifiable.** The connector call succeeded, and you still cannot tell
+  whether Fin's generic reply reflects empty/unhelpful data or good data it
+  ignored. **Before you use this verdict, go and get the payload** — see
+  below. It is a real category, but a much smaller one than it first appears,
+  and it is the category most often applied by default when the evidence was
+  simply never fetched. **Report it as its own category rather than guessing**
+  — collapsing it into "not helped" overstates confidence, and collapsing it
+  into "helped" understates a real blind spot.
+
+- **Empty — correctly returned nothing.** The payload came back as an empty
+  collection because the record genuinely has nothing to return. This is the
+  connector *working*, and it deserves its own row rather than being filed as
+  a failure to produce data. Distinguishing it from "unverifiable" is the
+  single highest-value thing payload access buys you.
+
+## Get the payloads before you read anything
+
+The transcript does not expose what a connector returned. The **execution log
+does** — `response_body` on the same `action_execution_results` fetch you
+already use for failures, and it covers successful calls, not just failed
+ones. See `references/endpoints-and-technique.md`.
+
+Pull bodies for every watch-item execution in your window *before* you read
+transcripts or dispatch readers, and carry a per-conversation note of which
+calls returned real data and which returned an empty collection. This is not
+an optimisation, it is what keeps the audit honest:
+
+- It separates "the connector had nothing to say" from "the connector was
+  ignored" — two findings with different owners and opposite fixes, which are
+  indistinguishable from a transcript alone.
+- It stops the most seductive aggregate error in this whole workflow:
+  observing that no reply cited specific data, and concluding the payload
+  isn't reaching replies, when most of those calls returned nothing to cite.
+  That error looks like a strong systemic finding and survives several
+  audits, because every run reproduces it.
+- It converts interpretive verdicts into corroborated ones (a response body
+  is on the corroboration ladder in `references/falsification.md`).
+
+If your skill's prior runs recorded a standing "we can't see payloads" blind
+spot, treat that as a claim to re-test, not a constraint to design around.
 
 ## Falsify before you report
 
@@ -111,6 +139,14 @@ Once you have more than about three or four conversations to read:
 4. If a subagent's run fails on a transient error, just relaunch that one —
    don't let one failure block the rest, and don't silently drop it from
    your final count.
+   **Verify the address you tell readers to report to.** If reports don't
+   arrive, suspect the recipient name before you suspect the readers. Some
+   agent-messaging tools accept an unroutable recipient, return success, and
+   drop the message — which presents exactly as "the readers finished and
+   went idle without reporting," and is easy to misdiagnose as a behavioural
+   quirk to be worked around with nudges. Confirm the correct address from
+   your harness's own agent listing, and if a whole batch goes silent, test
+   one reader against a known-good address before re-prompting all of them.
 5. Don't narrate progress in chat as each subagent's result lands ("3 more
    in", "still waiting on 12") — that just turns a long fan-out into a wall
    of low-value status updates. Collect silently in the background and post
