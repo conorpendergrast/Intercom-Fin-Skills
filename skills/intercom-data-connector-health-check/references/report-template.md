@@ -14,6 +14,11 @@ shapes every choice below:
 - **Priority actions lead.** The reader's first question is "what do I need
   to do", not "what's the full data dump" — so the ranked action list comes
   before the raw connector/watch-item tables, not after.
+- **Only corroborated findings may drive a priority action.** A finding that
+  rests solely on someone's reading of an automation's wording belongs in the
+  tables, not in the ranked actions — see `references/falsification.md`. A
+  run where nothing clears that bar publishes no priority actions at all,
+  which is the honest outcome rather than a failed run.
 - **Severity is encoded as colour *and* shape** (a pill plus a left border
   stripe), not colour alone — skimmable at a glance, and still legible if
   someone's colour-blind or the page prints in greyscale.
@@ -290,3 +295,8 @@ Keep the priority-actions list short and genuinely ranked — if everything is
 just has an empty or near-empty actions section and mostly `good`-status
 cards, which is itself useful confirmation, not a reason to skip publishing
 one.
+
+Say how many fault verdicts were downgraded for lack of corroboration. A run
+that genuinely found nothing and a run whose findings couldn't be stood
+behind both produce a short actions list, and they mean very different
+things — that number is what tells them apart.
