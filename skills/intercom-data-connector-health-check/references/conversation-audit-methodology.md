@@ -51,6 +51,11 @@ be quietly collapsed into either extreme:
   incorrect conclusion from correct data — especially watch for
   self-contradictory answers across repeated calls in the same conversation,
   which is a strong signal something is being misread.
+  **This verdict requires evidence from outside your own reading of the
+  transcript.** Run the checklist in `references/falsification.md`, then name
+  your corroborating source. If you have none, return **unverifiable**
+  instead — an uncorroborated fault verdict is the commonest way this audit
+  produces a finding that collapses on inspection.
 - **Unverifiable.** The connector call succeeded, but the transcript export
   doesn't expose the actual response payload — many conversation-export
   formats only log a bare `{"action": {"name": ..., "result": "success"}}"`
@@ -63,6 +68,14 @@ be quietly collapsed into either extreme:
   category dominates your results for a connector, say so explicitly and
   recommend checking the connector's raw response via its actual backend
   logs, not just Intercom's export.
+
+## Falsify before you report
+
+Every fault verdict goes through `references/falsification.md` before it
+counts: rule out the benign explanation, then name evidence that didn't come
+from your own reading. That reference also covers what happens to a verdict
+which can't clear the bar — the lead verifies it or it is downgraded, and it
+never reaches the report as a fault.
 
 ## Reading conversations without blowing your context
 
@@ -81,12 +94,20 @@ Once you have more than about three or four conversations to read:
    customer asking, did the connector's data get used, what was the
    resolution, quote short passages as evidence). Cap each subagent's report
    to something like 250–350 words so results stay comparable at a glance.
+   Name `references/falsification.md` in the dispatch prompt and require each
+   reader to run its checklist and state a corroborating source for any fault
+   verdict. Readers do not inherit this by implication — a reader who hasn't
+   been told to look for the benign explanation reliably won't.
 3. Collect the verdicts, then write the aggregate report yourself — don't
    let each subagent's framing stand alone; synthesise across all of them
    for the patterns that only show up in aggregate (e.g. "three separate
    conversations were manually corrected by a human afterwards, and all
    three times the correction contradicted what the connector-informed reply
    said").
+   **Resolve every interpretive fault verdict before you aggregate anything**
+   — verify it yourself or downgrade it. Aggregation and ranking are where
+   an unchecked verdict does its damage, so this cannot wait until after the
+   synthesis is written.
 4. If a subagent's run fails on a transient error, just relaunch that one —
    don't let one failure block the rest, and don't silently drop it from
    your final count.
