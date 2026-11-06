@@ -42,6 +42,27 @@ Turns messy logic — help docs, SOPs, bullet lists, or rough notes — into cle
 
 **What it does:** It reframes customer-facing prose as instructions to Fin, structures the logic into numbered steps with nested conditional branches and explicit `Else` paths, applies consistent indentation, and closes every Procedure with a "Does that cover what you need?" check — all following Intercom's documented best practices.
 
+### 🏗️ Fin Procedure Builder
+
+**Directory:** `skills/fin-procedure-builder/`
+
+Takes a Procedure from "here's the logic" to "it's in Intercom and previews correctly", using the Intercom CLI and a YAML file, with three templates so nobody has to reverse-engineer the YAML format.
+
+**Use this skill when:**
+
+- Creating or updating a Fin Procedure with `intercom fin procedures upload`
+- Turning a drafted Procedure (for example from the formatter skill) into a real one
+- You need to know what the Procedure YAML looks like for a particular block
+- An upload fails, or `--verify` reports a mismatch
+
+**What it does:** It pulls the latest templates from this repo first, then works through it in order:
+
+1. Starts from a template: one reference showing every feature, plus two opinionated starters, with and without a data connector.
+2. Uploads the Procedure as a draft with `--verify`.
+3. Reads Intercom's lint warnings.
+4. Previews every branch with Claude in Chrome.
+5. Publishes only once you say so.
+
 ### 🔍 Intercom Procedure Trigger Optimiser
 
 **Directory:** `skills/intercom-procedure-trigger-optimiser/`

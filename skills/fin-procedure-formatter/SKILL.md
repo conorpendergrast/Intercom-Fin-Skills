@@ -27,6 +27,7 @@ Do not trigger this skill when:
 
 - The user is asking for advice about Fin Procedure design at a higher level (which procedures to build, how they should fit together, how to score or sequence them) — that's strategy, not formatting.
 - The request is to debug or simulate a procedure rather than to format one.
+- The user wants to upload or create the Procedure in Intercom with the CLI, or needs the Procedure YAML. Use the `fin-procedure-builder` skill for that (it takes this skill's markdown as input).
 - The request is to optimise a procedure trigger / start list / do-not-start list — use the `intercom-procedure-trigger-optimiser` skill instead.
 
 ## Output format

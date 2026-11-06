@@ -1,0 +1,246 @@
+# =============================================================================
+# TEMPLATE 1: Every Procedure feature, in one file
+# =============================================================================
+# A reference, not a starting point. This shows the YAML for every block the
+# Procedure editor can produce, so you (or your AI agent) can see the exact
+# syntax before writing your own. For a real Procedure, start from
+# template-with-data-connector.yaml or template-no-data-connector.yaml.
+#
+# How this file was made: every feature was added by hand in the Intercom
+# Procedure editor, then the Procedure was downloaded with
+# `intercom fin procedures get`. So this is what Intercom itself writes, not a
+# guess. The names (teammates, connectors, articles) are fictional.
+#
+# Last verified: 6 Nov 2026 against Intercom CLI 0.14.1. The real Procedure
+# this came from round-trips cleanly with `upload --verify`.
+#
+# NOT YET COVERED: "Handoff to workflow" (the editor only offers live
+# workflows, and there wasn't one to point at) and the "Create..." menu
+# item. If you capture either, please open a PR.
+#
+# Each block below has a comment saying what it looks like in the editor
+# ("Editor:") and anything that isn't obvious ("Note:").
+# =============================================================================
+
+# --- Identity ---------------------------------------------------------------
+# Note: leave `id` out to CREATE a Procedure. Include it to UPDATE that one.
+# The server returns the new id after upload.
+id: 1234567
+name: Order help - every feature
+# Note: upload as draft. Use `intercom fin procedures publish <id>` to go live.
+state: draft
+
+# --- Triggers ---------------------------------------------------------------
+# Editor: Triggers > Based on the conversation (the description box).
+# Note: you need EITHER this OR at least one event trigger, or the Procedure
+# won't save.
+trigger_description: Trigger when a customer asks where their order is or says
+  an order hasn't arrived.
+# Editor: "Train Fin on examples" > Use when. The editor asks for 10+.
+# Note: the editor's "(0)" count may not include examples uploaded by CLI.
+# `procedures get` shows what's really saved.
+positive_triggers:
+- Where is my order?
+- My parcel still hasn't arrived
+# Editor: "Train Fin on examples" > Do not use when.
+negative_triggers:
+- How do I change my delivery address?
+# Editor: Triggers > Based on events. Options in the editor: Inbox trigger
+# (teammates start it from the inbox shortcut menu), Website element click,
+# API Call. Only `inbox` has been captured so far.
+triggers:
+- type: inbox
+
+# --- Audience and channels ----------------------------------------------------
+# Editor: the "Everyone" and "All channels" chips under the description.
+targeting:
+  channels:            # all_channels, or a list. Captured so far: web, email.
+  - web                # Others in the editor: iOS, Android, Facebook,
+  - email              # WhatsApp, Instagram, SMS, Slack, Discord, Telegram.
+  audiences:           # Optional. Omit for "Everyone". Use audience names
+  - Paying customers   # exactly as they appear in Intercom.
+
+# --- Settings (the gear icon) -----------------------------------------------
+# Editor: Settings > Reasoning > "Enable Procedure Switching". Lets Fin move
+# from this Procedure to another live one by itself.
+agentic_switch: true
+# Editor: Settings > End message. What Fin says when the Procedure ends.
+default_end:
+  message: Is there anything else I can help with today?
+
+# --- Guidance ---------------------------------------------------------------
+# Editor: Guidance > Custom guidance. Applies only inside this Procedure.
+guidance: Always refer to an order by its product name, not the internal ID.
+# Editor: Guidance > Workspace guidance. Which of your workspace guidance
+# categories Fin follows while running this Procedure.
+# Note: the editor warns that adding many categories can increase latency and
+# reduce reliability. Pick the ones you need.
+categories:
+- tone               # Editor: "Communication style"
+- routing            # Editor: "Escalation guidance"
+- clarification      # Editor: "Context and clarification"
+- content            # Editor: "Content and sources"
+- spam_detection     # Editor: "Spam"
+- other              # Editor: "Other"
+
+# --- Instructions -------------------------------------------------------------
+procedure:
+  main:
+  # A plain step is just a string. Inline tools sit inside the sentence.
+  # Editor: @Read attribute. Reads a person, company or conversation attribute.
+  - Greet the customer by name using <read attr="user.first_name" type="attribute" />
+    and ask what they need help with today.
+
+  # Editor: @Update attribute. Fin works out the value and stores it.
+  # Note: temporary.* attributes must be declared under temporary_attributes.
+  - Record why the customer is contacting us in <write attr="temporary.Contact reason" />
+
+  # Editor: @Wait for reply. Fin asks, then waits up to `timeout` seconds.
+  # `name` is the true/false attribute that's set if the wait runs out, which
+  # you can branch on in a later step.
+  - wait_for_reply:
+      content: Ask the customer for their order number.
+      name: wait_elapsed
+      timeout: 300
+
+  # Editor: @Condition (Natural Language). IF / ELSE IF / ELSE.
+  # Note: with only ONE `if`, write it as a bare if/then/else (see the code
+  # condition below), not a `decide` list. Intercom saves it that way.
+  - decide:
+    - if: the customer gives an order number
+      then: Thank the customer and continue.
+    - if: the customer doesn't know their order number
+      then: Ask for the email address they used to place the order.
+    # Editor: @Handoff to team, then a teammate or team by name.
+    # `<escalate />` with no `to` uses the default assignee.
+    else: Tell the customer a teammate will help. <escalate to="Support Team" />
+
+  # Editor: @Call data connector. Name must match the connector exactly.
+  - <use action="Get order status" />
+
+  # Editor: @Condition switched to "Code". A Python expression over `inputs`.
+  # Note: the mode applies to every branch in this step.
+  # Note: data connector results are at
+  #   inputs["data_connector"]["<name>"]["<field>"]
+  # and every call also has `status_code` and `error`.
+  - condition_type: code
+    if: inputs["data_connector"]["Get order status"]["status_code"] != 200
+    then:
+    - Tell the customer you couldn't look up their order and a teammate will help.
+    - <escalate />
+    # Editor: reading a connector field in text shows as a "DC." chip.
+    else: Tell the customer their order is <read attr="Get order status > order > status"
+      type="data_connector_output" />.
+
+  # Editor: @Look up content. Pick one or more sources.
+  # Note: `article.` for Help Center articles, `external_content.` for synced
+  # webpages. The title must match exactly or the upload is rejected.
+  # Note: quote any step that contains ": " (colon then space), or the YAML
+  # won't parse. Double any apostrophe inside single quotes ('').
+  - 'Check the delivery policy in <content_lookup attr="article.Delivery times: what to expect" />'
+
+  # Editor: @Execute code. Runs a code block defined under code_blocks below.
+  - Work out the delivery estimate with <execute_code_block name="Estimate delivery" />
+
+  # Editor: @Tag.
+  - Tag the conversation <tag name="Delivery question" />
+
+  # Editor: @Add note. A note teammates see, never the customer. Attributes
+  # can be spliced in.
+  - 'Leave a note for the team: <note>Customer asked about an order. Contact reason:
+    <read attr="temporary.Contact reason" type="attribute" /></note>'
+
+  # Editor: @Run sub-procedure. Runs the named block below, then comes back.
+  - run: Check refund eligibility
+
+  # Editor: @Wait for webhook. Pauses until an external system calls back.
+  # Defined under inline_tool_definitions below.
+  # Note: shows a warning in the editor until a data connector sends the
+  # callback URL. It still saves.
+  - <wait_for_webhook id="wait_for_webhook-1" />
+
+  # Editor: @End. Ends the Procedure and sends default_end.message.
+  - Thank the customer, then <end />
+
+  # --- A sub-procedure ---------------------------------------------------------
+  # Each sub-procedure is another key under `procedure:`, next to `main`.
+  Check refund eligibility:
+  # Editor: @Loop in teammate / agent. Asks a teammate and waits for an answer.
+  # Note: must collect at least one attribute, or the Procedure won't save.
+  # Note: Settings > More channels can also ask via Slack or a webhook (beta).
+  - human_in_the_loop:
+      content: Can I approve a refund for this order?
+      attributes_to_collect:
+      - temporary.Refund approved
+      timeout:
+        duration: 600
+        escalation_message: I haven't heard back from the teammate yet, so I'm passing
+          this to the team to make sure your request is processed.
+  - condition_type: code
+    decide:
+    # Note: shown here to demonstrate a boolean check. Intercom's linter flags
+    # it ("compares it to a boolean value"): in a real Procedure, a natural-
+    # language condition can judge this without storing an attribute.
+    - if: inputs["temporary"]["Refund approved"] == True
+      then: Tell the customer their refund is approved.
+    # Editor: @Handoff to ticket, then a ticket type.
+    - if: inputs["temporary"]["Contact reason"] == "Damaged item"
+      then: <handoff-to-ticket to="Damaged item report" />
+    # Editor: @Switch procedure. Leaves this Procedure for another.
+    # Note: only LIVE Procedures can be picked.
+    - if: inputs["temporary"]["Contact reason"] == "Late delivery"
+      then: <switch to="Handle late deliveries" />
+    else:
+    - Apologise that the refund can't go ahead.
+    # Editor: @End sub-procedure (only offered inside a sub-procedure).
+    # Returns to the step that ran it. Use <end /> to end everything.
+    - end: section
+
+# --- Code blocks (for @Execute code) --------------------------------------------
+# Editor: opens a full Python editor. Python 3.13. Must `return`.
+# Allowed modules: math, decimal, re, datetime, json, random, time.
+code_blocks:
+  Estimate delivery:
+    code: |
+      def main(inputs):
+          # inputs["data_connector"]["Get order status"]["order"]
+          # inputs["user"]["email"]
+          # inputs["temporary"]["Contact reason"]
+          return inputs
+
+      return main(inputs)
+
+# --- Inline tool definitions (for @Wait for webhook) ---------------------------
+inline_tool_definitions:
+  wait_for_webhook-1:
+    type: wait_for_webhook
+    name: refund_approved
+    timeout_settings:
+      timeout: 600
+      escalation_message: A human will follow up shortly.
+    attributes:
+    - name: callback_url          # always present; map it in a data connector
+      type: string
+      is_callback_url: true
+      default_value:
+    - name: refund_status         # a field the webhook sends back
+      type: string
+      is_callback_url: false
+      default_value: approved     # the editor's "Preview value"
+
+# --- Temporary attributes ------------------------------------------------------
+# Editor: "Create attribute" from @Update attribute or a teammate step.
+# Formats in the editor: Text, Number, True or false, List, Decimal number,
+# Date & time. Captured so far: string (Text), list, boolean.
+# Note: Intercom's linter warns if one isn't used in a code condition or a
+# note. Fin doesn't need to store things it can just read from the chat.
+temporary_attributes:
+  Contact reason:
+    type: list
+    description: Why the customer is contacting us about their order.
+    options:
+    - Late delivery
+    - Damaged item
+  Refund approved:
+    type: boolean
+    description: Is Fin allowed to tell the customer their refund is approved?

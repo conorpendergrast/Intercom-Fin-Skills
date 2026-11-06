@@ -1,0 +1,98 @@
+# =============================================================================
+# TEMPLATE 2: Look something up, then act on it (with a data connector)
+# =============================================================================
+# An opinionated shape for a simple process where Fin calls ONE data connector
+# and answers from the result. The fictional example: a customer asks where
+# their order is, Fin looks it up with a "Get order status" connector, and
+# tells them.
+#
+# Last verified: 6 Nov 2026 against Intercom CLI 0.14.1 (upload --verify).
+#
+# BEFORE YOU START
+#   - The data connector must already exist in the workspace, and its name in
+#     `<use action="..." />` must match its name in Intercom exactly. The
+#     server rejects the upload if it can't find it.
+#   - Know the shape of the connector's response, so you can write the
+#     `Connector name > field > subfield` paths below. Test the connector in
+#     Intercom first and copy the field names from a real response.
+#
+# HOW TO USE
+#   1. Copy this file and delete every comment line before you upload.
+#   2. Delete the `id:` line for a new Procedure.
+#   3. Swap "Get order status" and the field paths for your own connector.
+#
+# THE OPINIONS BAKED IN
+#   - Get what the connector needs FIRST (here, the order number), and say
+#     where to find it. Don't call the connector with a guess.
+#   - Check for failure IMMEDIATELY after the call, as its own step, with a
+#     code condition on `status_code`. A code condition is deterministic: Fin
+#     can't talk itself out of it. If the call failed, Fin says so honestly
+#     and hands off. It never improvises an answer.
+#   - The failure branch leaves a <note> for the teammate with what Fin had,
+#     so nobody has to ask the customer again.
+#   - Only then branch on the RESULT, in natural language, reading the field
+#     with <read ... type="data_connector_output" />.
+#   - No temporary attributes. You don't need to store connector fields:
+#     read them where you need them (Intercom's own linter says the same).
+#   - Single-branch checks are written as a bare `if/then/else` (not a
+#     `decide` with one `if`), because that's how Intercom saves them. Writing
+#     them the same way keeps `upload --verify` clean.
+#   - Same ending as every template: confirm, then end or hand off.
+# =============================================================================
+id: 1234567                       # delete this line to create a new Procedure
+name: Check an order's delivery status
+state: draft
+trigger_description: Use when a customer asks where their order is, when it
+  will arrive, or says it hasn't arrived yet. Don't use for changing a delivery
+  address, returns, or refunds.
+positive_triggers:
+- Where is my order?
+- My parcel still hasn't arrived
+- When will order 4471 be delivered?
+negative_triggers:
+- I need to change my delivery address
+- How do I return an item?
+targeting:
+  channels:
+  - all_channels
+agentic_switch: false
+categories:
+- tone
+- routing
+- clarification
+procedure:
+  main:
+  - 'If the customer hasn''t already given it, ask for their order number. Tell
+    them it''s in their order confirmation email and starts with "ORD-".'
+  - <use action="Get order status" />
+  - condition_type: code
+    if: inputs["data_connector"]["Get order status"]["status_code"] != 200
+    then:
+    - Tell the customer you couldn't look up their order just now and that a
+      teammate will pick it up here in this chat. Don't guess at where the order
+      is.
+    - '<note>Order lookup failed. Order number given by the customer is in the
+      conversation. Status code: <read attr="Get order status > status_code" type="data_connector_output"
+      /></note>'
+    - <escalate />
+    else: Continue to the next step.
+  - decide:
+    - if: <read attr="Get order status > order > status" type="data_connector_output"
+        /> is delivered
+      then: Tell the customer the order was delivered on <read attr="Get order status
+        > order > delivered_at" type="data_connector_output" />. If they say they
+        haven't received it, tell them a teammate will help here in this chat and
+        <escalate />
+    - if: <read attr="Get order status > order > status" type="data_connector_output"
+        /> is in transit
+      then: Tell the customer the order is on its way and the expected delivery
+        date is <read attr="Get order status > order > expected_delivery" type="data_connector_output"
+        />.
+    else: Tell the customer the order is delayed and a teammate will check it
+      here in this chat. <escalate />
+  - 'Ask the customer: "Does that answer your question?"'
+  - if: The customer is happy with the answer and no longer needs help
+    then:
+    - Thank the customer for their time.
+    - <end />
+    else: Tell the customer a teammate will help here in this chat. <escalate />

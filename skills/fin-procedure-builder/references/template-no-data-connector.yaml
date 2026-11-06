@@ -1,0 +1,100 @@
+# =============================================================================
+# TEMPLATE 3: Triage, answer, or hand off (no data connector)
+# =============================================================================
+# An opinionated shape for the most common Procedure: Fin can't look anything
+# up, so its job is to work out which situation the customer is in, answer the
+# simple case from your help content, and hand everything else to a teammate
+# with the details they'll need.
+#
+# Based on two Procedures running in production, anonymised. The fictional
+# product is "Kitty", a group-payments app where organisers collect money and
+# then withdraw it as a payout.
+#
+# Last verified: 6 Nov 2026 against Intercom CLI 0.14.1 (upload --verify).
+#
+# HOW TO USE
+#   1. Copy this file. Delete every comment line before you upload: comments
+#      are dropped by the server anyway, and leftovers confuse the next reader.
+#   2. Delete the `id:` line for a new Procedure. Keep it (with your own
+#      Procedure's ID) to update an existing one.
+#   3. Replace the Kitty wording with your own. Keep the shape.
+#
+# THE OPINIONS BAKED IN
+#   - Step 1 asks ONE triage question, and tells Fin not to ask it again if the
+#     customer has already answered it in their first message.
+#   - The hand-off branches come FIRST in the decide. The answer-from-content
+#     branch is the `else`. That way Fin only answers when nothing in the
+#     conversation says "this needs a person".
+#   - Every hand-off branch says what to tell the customer, what Fin must NOT
+#     promise, and what to collect before handing off. Collecting first means
+#     the teammate doesn't have to ask again.
+#   - "Here in this chat": customers in Messenger are already talking to you.
+#     Never tell them to email support or "ask for a person".
+#   - The content branch names ONE article and tells Fin to give the steps
+#     once. Repeating the same steps is the most common Fin loop.
+#   - It ends with a check ("Does that cover what you need?") and a bare
+#     if/else: happy -> thank and end, anything else -> hand off. Never leave
+#     an unhappy customer with no route out.
+# =============================================================================
+id: 1234567                       # delete this line to create a new Procedure
+name: Triage payouts held for review
+state: draft                      # always upload as draft; publish separately
+trigger_description: 'Use when the customer says their payout or collected funds
+  are held up: under review, "Review pending", locked, "funds unavailable", or
+  they can''t withdraw the money yet, including a customer pasting the "Your
+  payout is being reviewed" email. Don''t use for a payment that fails when
+  someone chips in, or for a general question about why Kitty asks for ID.'
+positive_triggers:                # aim for 10-20 real customer messages
+- My payout has said under review for two days
+- Why can't I withdraw the money from my collection?
+- 'I got an email saying "Your payout is being reviewed", what does that mean?'
+- The funds say unavailable, I need them for a gift today
+negative_triggers:                # near-misses that belong somewhere else
+- My card was declined when I tried to chip in
+- Why do you need a copy of my passport?
+targeting:
+  channels:
+  - all_channels
+agentic_switch: false
+categories:                       # workspace guidance this Procedure follows
+- tone
+- routing
+- content
+- clarification
+procedure:
+  main:
+  - 'Find out how long it''s been and whether it''s urgent. Acknowledge that the
+    payout is being held. If the customer hasn''t already said, ask: "When did
+    your collection close, and do you need the money today or very soon?"'
+  - decide:
+    - if: The customer says the money is urgent or needed today or soon, or asks
+        for the payout to be released, checked, sped up or actioned
+      then: Tell the customer you understand it's urgent and that a Kitty teammate
+        will pick it up here in this chat. Don't tell them to email or say it's
+        urgent anywhere else, and don't say when the review will finish. Ask for
+        the collection's name or link, if they haven't given it. <escalate />
+    - if: The customer says the payout has been held for longer than a few hours,
+        or for days or more
+      then: Tell the customer it's taking longer than usual and a Kitty teammate
+        will check where the review is up to here in this chat. Don't repeat the
+        usual review time to them. Ask for the collection's name or link, if they
+        haven't given it. <escalate />
+    - if: The customer says Kitty has emailed them asking to verify their identity,
+        or that they've already verified
+      then: Don't ask them to send ID or personal details in this chat. Tell them
+        a Kitty teammate can confirm where their review is up to here in this
+        chat. Ask for the collection's name or link, if they haven't given it.
+        <escalate />
+    else: '<content_lookup attr="article.Why is my payout under review?" />Share
+      what the help content says about payout reviews and how long they usually
+      take. Give these steps once only. Never say the payout has been cleared,
+      approved or unlocked, and never say why it was flagged: you can''t see
+      review outcomes.'
+  - 'Ask the customer: "Does that cover what you need?"'
+  - if: The customer is happy with the answer and no longer needs help
+    then:
+    - Thank the customer for their time.
+    - <end />
+    else: Tell the customer a Kitty teammate will check the payout here in this
+      chat. Ask for the collection's name or link, if they haven't given it.
+      <escalate />
