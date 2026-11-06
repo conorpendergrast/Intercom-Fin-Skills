@@ -17,6 +17,7 @@ Each lives in `skills/<name>/`:
 
 - **`fin-procedure-advisor`** — decides which Fin Procedures to build and in what order (Filter → Score → Sequence).
 - **`fin-procedure-formatter`** — turns rough notes/SOPs into clean, paste-ready Fin Procedure markdown.
+- **`fin-procedure-builder`** — writes Procedure YAML from templates, uploads it with the Intercom CLI, and previews it with Claude in Chrome.
 - **`intercom-procedure-trigger-optimiser`** — sharpens a Procedure's description and start / do-not-start lists to cut misfires.
 - **`intercom-bulk-article-updates`** — safely reads, edits, and bulk-updates Help Center article bodies without corrupting them or losing progress.
 - **`intercom-data-connector-health-check`** — audits data connector health metrics AND whether connectors actually help customers (not just HTTP success), via UI-only endpoints and conversation-level auditing.
