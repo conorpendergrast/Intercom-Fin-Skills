@@ -14,9 +14,13 @@
 # Last verified: 6 Nov 2026 against Intercom CLI 0.14.1. The real Procedure
 # this came from round-trips cleanly with `upload --verify`.
 #
-# NOT YET COVERED: "Handoff to workflow" (the editor only offers live
-# workflows, and there wasn't one to point at) and the "Create..." menu
-# item. If you capture either, please open a PR.
+# Blocks marked "From a production Procedure" were captured from live
+# Procedures in another workspace rather than built here. They match what
+# Intercom writes, but they can only round-trip where their targets exist
+# (for example a live workflow).
+#
+# NOT YET COVERED: the "Website element click" and "API Call" event
+# triggers. If you capture either, please open a PR.
 #
 # Each block below has a comment saying what it looks like in the editor
 # ("Editor:") and anything that isn't obvious ("Note:").
@@ -54,9 +58,10 @@ triggers:
 # --- Audience and channels ----------------------------------------------------
 # Editor: the "Everyone" and "All channels" chips under the description.
 targeting:
-  channels:            # all_channels, or a list. Captured so far: web, email.
-  - web                # Others in the editor: iOS, Android, Facebook,
-  - email              # WhatsApp, Instagram, SMS, Slack, Discord, Telegram.
+  channels:            # all_channels, or a list. Confirmed names: web,
+  - web                # email, ios, android, whatsapp. Others in the editor
+  - email              # (Facebook, Instagram, SMS, Slack, Discord, Telegram)
+  - whatsapp           # are probably lowercase too: check with `get`.
   audiences:           # Optional. Omit for "Everyone". Use audience names
   - Paying customers   # exactly as they appear in Intercom.
 
@@ -145,6 +150,15 @@ procedure:
   # Editor: @Tag.
   - Tag the conversation <tag name="Delivery question" />
 
+  # Editor: @Update attribute on a conversation attribute, not a temporary one.
+  # Fin sets a real conversation attribute your workflows and reports can use.
+  - Set <write attr="conversation.Category" /> to Deliveries
+
+  # Formatting: step text accepts simple HTML. <b>, <i>, <code>, <br> and
+  # <a href="..."> links all work. Markdown nested lists don't (they flatten).
+  - 'Say: "You can track it any time from <b>Orders</b> in your account, or here:
+    <a href="https://example.com/track">https://example.com/track</a>"'
+
   # Editor: @Add note. A note teammates see, never the customer. Attributes
   # can be spliced in.
   - 'Leave a note for the team: <note>Customer asked about an order. Contact reason:
@@ -153,11 +167,30 @@ procedure:
   # Editor: @Run sub-procedure. Runs the named block below, then comes back.
   - run: Check refund eligibility
 
+  # Editor: @Create... (the last item in the @ menu). It creates things the
+  # Procedure needs, such as a new sub-procedure or a temporary attribute,
+  # without leaving the step. In YAML they appear as a new key under
+  # `procedure:` or `temporary_attributes:`. There's no separate syntax.
+
+  # Editor: a sub-procedure can be run from inside a branch, too. Quote the
+  # name if it contains a colon.
+  - if: the customer wants to cancel the order
+    then:
+      run: 'Cancellations: check eligibility'
+    else: Continue to the next step.
+
   # Editor: @Wait for webhook. Pauses until an external system calls back.
   # Defined under inline_tool_definitions below.
   # Note: shows a warning in the editor until a data connector sends the
   # callback URL. It still saves.
   - <wait_for_webhook id="wait_for_webhook-1" />
+
+  # Editor: @Handoff to workflow. Ends the Procedure and hands the
+  # conversation to a workflow. From a production Procedure.
+  # Note: the editor only offers LIVE workflows. Uploading with a workflow
+  # name that doesn't exist (or isn't live) will fail, so it's commented out
+  # here. Remove the "#" and use your own live workflow's name.
+  # - <run-workflow to="Mark as priority and pass to routing" />
 
   # Editor: @End. Ends the Procedure and sends default_end.message.
   - Thank the customer, then <end />
@@ -196,6 +229,21 @@ procedure:
     # Returns to the step that ran it. Use <end /> to end everything.
     - end: section
 
+  # A sub-procedure doesn't have to be a list of steps. One that is only a
+  # condition is written as a mapping (no leading "-"). From a production
+  # Procedure.
+  'Cancellations: check eligibility':
+    condition_type: code
+    # Note: code conditions are Python. `and`/`or`, `.lower()` and `in (...)`
+    # all work. Guard against empty values with `(x or "")`, because an
+    # attribute Fin hasn't set yet is None.
+    if: (inputs["temporary"]["Contact reason"] or "").lower() in ("late delivery",
+      "damaged item") and (inputs["temporary"]["Days since order"] or 0) <= 30
+    then: Tell the customer the order can be cancelled. <escalate />
+    else:
+    - Tell the customer the order is too old to cancel here.
+    - end: section
+
 # --- Code blocks (for @Execute code) --------------------------------------------
 # Editor: opens a full Python editor. Python 3.13. Must `return`.
 # Allowed modules: math, decimal, re, datetime, json, random, time.
@@ -209,6 +257,12 @@ code_blocks:
           return inputs
 
       return main(inputs)
+    # Note: `output` describes what the block returns, so later steps can
+    # read it. type is string or object (seen in production Procedures).
+    output:
+    - name: Estimate delivery
+      type: string
+      example_value: 3 days
 
 # --- Inline tool definitions (for @Wait for webhook) ---------------------------
 inline_tool_definitions:
@@ -230,8 +284,11 @@ inline_tool_definitions:
 
 # --- Temporary attributes ------------------------------------------------------
 # Editor: "Create attribute" from @Update attribute or a teammate step.
-# Formats in the editor: Text, Number, True or false, List, Decimal number,
-# Date & time. Captured so far: string (Text), list, boolean.
+# Formats, editor name -> YAML type:
+#   Text -> string        Number -> integer      Decimal number -> decimal
+#   True or false -> boolean   List -> list      Date & time -> date
+# Order ID, Order total and Order date below are here to show each format.
+# The linter flags them as unused, which is expected in this reference.
 # Note: Intercom's linter warns if one isn't used in a code condition or a
 # note. Fin doesn't need to store things it can just read from the chat.
 temporary_attributes:
@@ -244,3 +301,17 @@ temporary_attributes:
   Refund approved:
     type: boolean
     description: Is Fin allowed to tell the customer their refund is approved?
+  Order ID:
+    type: integer
+    description: The customer's order number, digits only.
+  Order total:
+    type: decimal
+    description: The order total in the customer's currency, without the symbol.
+  Days since order:
+    type: integer
+    description: How many whole days ago the customer placed the order.
+  Order date:
+    type: date
+    # Tip from production: say the format you want in the description.
+    description: The date the customer placed the order. Always store this
+      formatted as YYYY-MM-DD.

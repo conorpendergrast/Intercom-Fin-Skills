@@ -112,4 +112,6 @@ The all-features template comes from a real Procedure built by hand in the edito
 4. Check it round-trips: map the fictional names back to real ones in the sandbox and run `upload --verify`.
 5. Open a pull request. Don't push to `main`.
 
-Known gaps right now: Handoff to workflow, the "Create..." menu item, the Website element click and API Call event triggers, and the YAML names of the Number, Decimal and Date & time attribute formats.
+Known gaps right now: the Website element click and API Call event triggers.
+
+If you can't build a feature in a sandbox (Handoff to workflow, for example, needs a live workflow), reading a production Procedure that already uses it is fine: `procedures get` is read-only. Copy only the syntax, never the client's wording or names, and mark the block "From a production Procedure" in the template.

@@ -32,7 +32,26 @@ Last verified: 6 Nov 2026, Intercom CLI 0.14.1.
 
 Write it that way to begin with, or `upload --verify` reports a mismatch on `decide`.
 
+**The same single-branch rule applies everywhere:** inside a branch (`then:` holding a single `if`) and in a sub-procedure that is only a condition. A sub-procedure like that is a mapping, not a list:
+
+```yaml
+'Cancellations: check eligibility':
+  condition_type: code
+  if: (inputs["temporary"]["Contact reason"] or "") == "Damaged item"
+  then: Tell the customer the order can be cancelled. <escalate />
+  else:
+  - end: section
+```
+
 **`condition_type: code` applies to every branch in that step.** You can't mix a code branch and a natural-language branch in one condition. Use two steps.
+
+**Step text takes simple HTML, not markdown.** `<b>`, `<i>`, `<code>`, `<br>` and `<a href="...">` links all survive. Markdown lists don't.
+
+**Code conditions are Python, and attributes can be empty.** An attribute Fin hasn't set yet is `None`, so `inputs["temporary"]["x"].lower()` can crash. Guard it: `(inputs["temporary"]["x"] or "").lower()`, `(inputs["temporary"]["n"] or 0) > 3`.
+
+**Temporary attribute types:** Text is `string`, Number is `integer`, Decimal number is `decimal`, True or false is `boolean`, List is `list` (with `options:`), Date & time is `date`. For dates, say the format you want in the description ("Always store this formatted as YYYY-MM-DD"), because Fin follows it.
+
+**You may see `<number>` in existing trigger examples.** Examples that came from real conversations can have digits redacted to `<number>` (for example "why did payout <number> fail?"). Examples you upload yourself keep their digits. When you copy examples from an existing Procedure, replace `<number>` with a realistic value or remove it.
 
 **Long lines get re-wrapped by the server.** That's cosmetic. `--verify` compares content, not layout.
 
@@ -48,8 +67,12 @@ The server checks these at upload, and rejects the whole Procedure if one is mis
 | Code block | `<execute_code_block name="Block name" />` | A key under `code_blocks:` |
 | Sub-procedure | `run: Name` | A key under `procedure:` |
 | Temporary attribute | `temporary.Name` | A key under `temporary_attributes:` |
+| Conversation attribute | `<write attr="conversation.Name" />` | An existing conversation data attribute |
+| Channel | `targeting: channels:` | A channel the workspace actually has set up (for example, `whatsapp` fails if WhatsApp isn't connected) |
 
-These ones only work if the target is **live**: `<switch to="Procedure name" />` (the editor won't offer a draft Procedure) and Handoff to workflow (the editor won't offer a paused workflow).
+These ones only work if the target is **live**: `<switch to="Procedure name" />` (the editor won't offer a draft Procedure) and `<run-workflow to="Workflow name" />` (Handoff to workflow; the editor won't offer a paused workflow).
+
+Because these checks are against the *workspace*, a Procedure copied from one workspace to another often fails on the first upload. Read the error, which names the missing thing, and swap in the target workspace's equivalent.
 
 ## Blocks with extra rules
 
