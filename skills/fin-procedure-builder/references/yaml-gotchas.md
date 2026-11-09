@@ -37,6 +37,8 @@ print(norm(yaml.safe_load(open("p.yaml"))) == norm(yaml.safe_load(open("saved.ya
 
 `saved.yaml` is the output of `intercom fin procedures get <id> --workspace <app_id> saved.yaml`. Your file can keep plain-string steps; the server accepts them.
 
+**`procedures publish` can't promote a draft over a live Procedure.** It sets `state: live` and uploads, which the server saves as another draft. Publish from the editor's **Publish to Fin Main** button.
+
 **`procedures versions` can fail** with "Fin SDK not enabled for this workspace" followed by "Permission denied", in a workspace where `get`, `list` and `upload` work. Use `get` or the editor's version history instead.
 
 ## YAML syntax

@@ -103,6 +103,8 @@ intercom fin procedures versions <id> --workspace <app_id>   # confirm which ver
 
 `publish` makes the draft live. `intercom fin procedures pause <id>` takes it offline again.
 
+**On CLI 0.15.2, `publish` can't promote a draft over a Procedure that's already live.** It works by setting `state: live` and uploading, and the server treats that upload as one more draft save (the same `live_upload_not_promoted` warning). Publish from the editor instead: open the Procedure, click **Publish to Fin Main**, add a version note and confirm. Then check with `get` that `has_unpublished_changes` has gone.
+
 Before you publish over a live Procedure, save what's live now (`intercom fin procedures get <id> --workspace <app_id> > before.yaml`), so rolling back is one upload and one publish.
 
 On CLI 0.15.2, `versions` can fail with "Fin SDK not enabled" in a workspace where `get` and `list` work. If it does, check the result with `get` (`state: live`, no `has_unpublished_changes`) or the editor's version history.
