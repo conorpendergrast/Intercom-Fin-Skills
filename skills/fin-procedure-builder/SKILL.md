@@ -75,8 +75,9 @@ Intercom adds Procedure features regularly, and the templates in this skill get 
 intercom fin procedures upload p.yaml --workspace <app_id> --verify --note "what changed"
 ```
 
-- Keep `state: draft` in the file. Uploading doesn't make anything live.
-- `--verify` fails if anything you sent didn't come back the same. The usual causes, and fixes, are in `yaml-gotchas.md`.
+- **A new Procedure:** keep `state: draft` in the file. Uploading doesn't make anything live.
+- **A Procedure that's already live:** leave `state: live` in the file, exactly as `get` returned it. Since CLI 0.15, the server saves your upload to the Procedure's *draft* and leaves the live version alone. The response carries the warning `live_upload_not_promoted` ("Saved to the procedure's draft; the live version was not changed"), and `get` then shows `has_unpublished_changes: true`. Customers keep the old version until you publish (Step 6). Don't change `state` to `draft` to get a draft: `publish` and `pause` work by setting `state` and uploading, so `state` is the switch, not a label.
+- `--verify` fails if anything you sent didn't come back the same. The usual causes, and fixes, are in `yaml-gotchas.md`. **On CLI 0.15.2 it also flags every step as a mismatch**, because the server now returns each step with an `id`. Check by hand instead (see `yaml-gotchas.md`).
 - `--note` labels this save in the version history.
 - The response includes the Procedure's ID. Put it into your file as `id:` so the next upload updates instead of creating a duplicate.
 
@@ -100,7 +101,13 @@ intercom fin procedures publish <id> --workspace <app_id> --note "why"
 intercom fin procedures versions <id> --workspace <app_id>   # confirm which version is live
 ```
 
-`intercom fin procedures pause <id>` takes it offline again.
+`publish` makes the draft live. `intercom fin procedures pause <id>` takes it offline again.
+
+**On CLI 0.15.2, `publish` can't promote a draft over a Procedure that's already live.** It works by setting `state: live` and uploading, and the server treats that upload as one more draft save (the same `live_upload_not_promoted` warning). Publish from the editor instead: open the Procedure, click **Publish to Fin Main**, add a version note and confirm. Then check with `get` that `has_unpublished_changes` has gone.
+
+Before you publish over a live Procedure, save what's live now (`intercom fin procedures get <id> --workspace <app_id> > before.yaml`), so rolling back is one upload and one publish.
+
+On CLI 0.15.2, `versions` can fail with "Fin SDK not enabled" in a workspace where `get` and `list` work. If it does, check the result with `get` (`state: live`, no `has_unpublished_changes`) or the editor's version history.
 
 ## Keeping the templates current (for maintainers)
 
