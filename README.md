@@ -122,11 +122,30 @@ A safety framework and reusable scripts for reading, editing, and bulk-updating 
 
 **What it does:** It enforces a four-guard write contract that makes the two silent failure modes of bulk article work un-shippable — **corruption on write** (a body shipped HTML-escaped renders its source as text) and **lost progress** (a long run dies to a rate limit or context exhaustion). It covers JSON-safe writes, a pre-write encode guard, verifying against the re-fetched stored body, reconciling parallel writers, plus resilient bulk reads (subagent fan-out, resume-by-existing-file, truncation detection, rate-limit handling) and the Intercom CLI/API gotchas that quietly break bulk jobs. Ships four reusable reference scripts (`guard_lib`, `apply_edit`, `verify_run`, `detect_corruption`).
 
+## Where each skill runs
+
+Some skills only need Claude to think and write. Others run the Intercom CLI on your computer or drive your signed-in Chrome, and those need a particular setup.
+
+| Skill | What it needs | Claude Code (terminal, or Desktop app "Local") | Claude Cowork |
+|---|---|---|---|
+| Fin Procedure Advisor | Nothing | ✅ | ✅ |
+| Fin Procedure Formatter | Nothing | ✅ | ✅ |
+| Intercom Procedure Trigger Optimiser | Nothing (paste in your Procedure and examples) | ✅ | ✅ |
+| Intercom Data Connector Health Check | Claude in Chrome, signed in to Intercom | ✅ | ✅ |
+| Fin Procedure Builder | Intercom CLI + Claude in Chrome | ✅ | ⚠️ Drafts the YAML; upload it from Claude Code |
+| Intercom Bulk Article Updates | Intercom CLI + Node | ✅ | ❌ |
+
+**Why the CLI skills need Claude Code:** `intercom auth login` saves your sign-in on your own computer. Claude Code in the terminal, or a **Local** session in the Desktop app's Code tab, runs on that computer, so it can use the CLI. A Desktop **Cloud** session, claude.ai/code, and Cowork run in a separate sandbox, which doesn't have your CLI install or sign-in.
+
+**Claude in Chrome in Claude Code:** start with `claude --chrome`, or run `/chrome` once and choose "Enabled by default". You need a paid Claude plan (not an API key), signed in with `/login`, and Chrome signed in to the right Intercom workspace. See [Use Claude Code with Chrome](https://code.claude.com/docs/en/chrome).
+
 ## How to Use These Skills
 
-Each skill in this repo lives in its own folder under `skills/`, with a `SKILL.md` inside (e.g. `skills/fin-procedure-advisor/SKILL.md`). Use whichever set of steps matches where you want to run the skill.
+Each skill in this repo lives in its own folder under `skills/`, with a `SKILL.md` inside (e.g. `skills/fin-procedure-advisor/SKILL.md`). Use whichever set of steps matches where you want to run the skill, and check [Where each skill runs](#where-each-skill-runs) first.
 
 ### In Claude Code
+
+This covers Claude Code in the terminal and in the Desktop app's Code tab (Local sessions). Skills you upload to claude.ai sync into Claude Code automatically, but skills you copy into `~/.claude/skills/` don't sync back to Cowork.
 
 Claude Code auto-discovers skills placed in `~/.claude/skills/` (available across all your projects) or in a project's `.claude/skills/` folder (scoped to that repo). New skills are picked up within the current session — no restart needed.
 
@@ -138,9 +157,9 @@ Claude Code auto-discovers skills placed in `~/.claude/skills/` (available acros
 
 For more detail, see [Extend Claude with skills](https://code.claude.com/docs/en/skills) in the Claude Code docs.
 
-### In Claude Cowork (claude.ai)
+### In Claude Cowork (Desktop app or claude.ai)
 
-Cowork accepts skills as a ZIP of the skill folder, uploaded through the web UI.
+Cowork accepts skills as a ZIP of the skill folder, uploaded through the web UI. Not every skill can do its whole job in Cowork: see [Where each skill runs](#where-each-skill-runs).
 
 1. Clone or download this repo.
 2. From the `skills/` directory, zip the skill folder you want — the ZIP must contain the folder (with `SKILL.md` inside), not just the loose file:
