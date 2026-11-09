@@ -2,7 +2,7 @@
 
 Everything here was hit for real while building Procedures with the Intercom CLI. Each one costs a failed upload, a `--verify` mismatch, or a Procedure that saves but doesn't behave. Read this before your first upload. It's quicker than finding them one at a time.
 
-Last verified: 6 Nov 2026, Intercom CLI 0.14.1.
+Last verified: 6 Nov 2026, Intercom CLI 0.14.1. The CLI 0.15 notes below were added on 9 Nov 2026, from CLI 0.15.2.
 
 ## Before you upload
 
@@ -13,6 +13,31 @@ Last verified: 6 Nov 2026, Intercom CLI 0.14.1.
 **No `id` creates a Procedure. An `id` updates that one.** Delete the `id:` line from any template before your first upload. Never copy an `id` from one workspace into another. The server returns the new ID after upload. Use it from then on.
 
 **Upload as `state: draft`, then publish separately.** `intercom fin procedures publish <id>` sets it live; `pause` takes it offline; `versions <id>` shows which version is live. Keeping upload and publish separate means you can preview before customers see it.
+
+**Changing a Procedure that's already live (CLI 0.15 and later): keep `state: live`.** The server saves the upload to the Procedure's draft, warns `live_upload_not_promoted`, and leaves what customers get unchanged until you `publish`. `get` shows `has_unpublished_changes: true` meanwhile, and the editor shows "You are viewing unsaved changes"; **Preview changes** previews the draft. Don't switch `state` to `draft` to make a draft: `publish` and `pause` are just "download, set `state`, upload", so `state` is the on/off switch.
+
+## CLI 0.15.2 quirks
+
+**`--verify` reports every step as changed.** The server now returns each step as an object with an `id` (`- instructions: '...'` plus `id: <uuid>`, and `<end id="..." />`), so a plain-string step never "survives". Compare the content yourself, ignoring the IDs:
+
+```python
+import re, yaml
+def norm(x):
+    if isinstance(x, dict):
+        if set(x) - {"id"} == {"instructions"}:
+            return norm(x["instructions"])
+        return {k: norm(v) for k, v in x.items() if k not in ("id", "version", "has_unpublished_changes")}
+    if isinstance(x, list):
+        return [norm(i) for i in x]
+    if isinstance(x, str):
+        return re.sub(r'<end id="[^"]+" />', "<end />", x)
+    return x
+print(norm(yaml.safe_load(open("p.yaml"))) == norm(yaml.safe_load(open("saved.yaml"))))
+```
+
+`saved.yaml` is the output of `intercom fin procedures get <id> --workspace <app_id> saved.yaml`. Your file can keep plain-string steps; the server accepts them.
+
+**`procedures versions` can fail** with "Fin SDK not enabled for this workspace" followed by "Permission denied", in a workspace where `get`, `list` and `upload` work. Use `get` or the editor's version history instead.
 
 ## YAML syntax
 
