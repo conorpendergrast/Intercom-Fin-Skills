@@ -75,8 +75,9 @@ Intercom adds Procedure features regularly, and the templates in this skill get 
 intercom fin procedures upload p.yaml --workspace <app_id> --verify --note "what changed"
 ```
 
-- Keep `state: draft` in the file. Uploading doesn't make anything live.
-- `--verify` fails if anything you sent didn't come back the same. The usual causes, and fixes, are in `yaml-gotchas.md`.
+- **A new Procedure:** keep `state: draft` in the file. Uploading doesn't make anything live.
+- **A Procedure that's already live:** leave `state: live` in the file, exactly as `get` returned it. Since CLI 0.15, the server saves your upload to the Procedure's *draft* and leaves the live version alone. The response carries the warning `live_upload_not_promoted` ("Saved to the procedure's draft; the live version was not changed"), and `get` then shows `has_unpublished_changes: true`. Customers keep the old version until you publish (Step 6). From CLI 0.15.4 the upload output says so and tells you to run `publish`. Don't change `state` to `draft` to get a draft: leave the live/paused switch to `publish` and `pause`.
+- `--verify` fails if anything you sent didn't come back the same. The usual causes, and fixes, are in `yaml-gotchas.md`. **On CLI 0.15.2 it also flags every step as a mismatch**, because the server now returns each step with an `id`. Check by hand instead (see `yaml-gotchas.md`).
 - `--note` labels this save in the version history.
 - The response includes the Procedure's ID. Put it into your file as `id:` so the next upload updates instead of creating a duplicate.
 
@@ -91,6 +92,13 @@ Follow `references/preview-with-claude-in-chrome.md`. In short: open the Procedu
 
 Report each test as message → Procedure that ran → branch → pass/fail. If something fails, fix the YAML and go back to Step 3.
 
+**Changing a live Procedure? Check for simulations, and run them if there are any.**
+
+1. `intercom fin simulations list <procedure_id> --workspace <app_id>` shows the Procedure's saved simulations as YAML. If it lists none, skip this check and move on to Step 6.
+2. If it lists some, run them against your draft before you publish: `intercom fin simulations run <procedure_id> --workspace <app_id>`, then `intercom fin simulations result <run_id> --workspace <app_id>`.
+
+From CLI 0.15.4, `run` tests the unpublished draft when there is one (`--live` tests what customers have now), so a failure here means your edit broke something that used to pass. Simulations catch regressions; the preview above is still how you check the new behaviour.
+
 ## Step 6: Publish only when the user says so
 
 Publishing changes what real customers get, so **ask before you publish**, every time, even if the user approved a previous publish.
@@ -100,7 +108,13 @@ intercom fin procedures publish <id> --workspace <app_id> --note "why"
 intercom fin procedures versions <id> --workspace <app_id>   # confirm which version is live
 ```
 
-`intercom fin procedures pause <id>` takes it offline again.
+`publish` makes the draft live, the same as **Publish to Fin Main** in the editor. Then check with `get` that `has_unpublished_changes` has gone. `intercom fin procedures pause <id>` takes it offline again, the same as Pause in the editor. It saves no new version, so `--note` is ignored.
+
+**You need CLI 0.15.4 or later** (`npm install -g @intercom/cli@latest`). On 0.15.2 and 0.15.3, `publish` couldn't promote a draft over a live Procedure (it saved one more draft instead), so changes only went live from the editor, and `pause` left an extra draft behind.
+
+Before you publish over a live Procedure, save what's live now (`intercom fin procedures get <id> --workspace <app_id> > before.yaml`), so rolling back is one upload and one publish.
+
+On CLI 0.15.2, `versions` can fail with "Fin SDK not enabled" in a workspace where `get` and `list` work. If it does, check the result with `get` (`state: live`, no `has_unpublished_changes`) or the editor's version history.
 
 ## Keeping the templates current (for maintainers)
 
