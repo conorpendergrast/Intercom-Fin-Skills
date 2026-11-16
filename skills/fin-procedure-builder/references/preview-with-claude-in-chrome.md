@@ -45,6 +45,6 @@ For each test, record: the message you sent, which Procedure ran (from the log),
 
 The CLI also has `intercom fin simulations` (`generate`, `upload`, `run`, `result`) for repeatable tests. Build a set once a Procedure is stable (`generate` drafts one; `upload` saves your own), then rerun it whenever you change that Procedure.
 
-From CLI 0.15.4, `run` and `generate` test the Procedure's **unpublished draft** when it has one, and the live version otherwise. Pass `--live` to test the live version even when a draft exists. So for an edit to a live Procedure, the order is: upload (saves a draft), preview, run the simulations, then publish. On older CLIs they only ever tested the live version, so they couldn't check an edit before it went out.
+From CLI 0.15.4, `run` and `generate` test the Procedure's **unpublished draft** when it has one, and the live version otherwise. Pass `--live` to test the live version even when a draft exists. So for an edit to a live Procedure, the order is: upload (saves a draft), preview, `simulations list <procedure_id>` to see whether any exist, `run` them only if there are some, then publish. On older CLIs they only ever tested the live version, so they couldn't check an edit before it went out.
 
 They don't replace the hands-on preview, for a new Procedure or a changed branch, because you learn the most from reading Fin's actual replies.

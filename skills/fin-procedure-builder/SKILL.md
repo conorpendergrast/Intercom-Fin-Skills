@@ -92,7 +92,12 @@ Follow `references/preview-with-claude-in-chrome.md`. In short: open the Procedu
 
 Report each test as message → Procedure that ran → branch → pass/fail. If something fails, fix the YAML and go back to Step 3.
 
-**Changing a live Procedure that already has simulations?** Run them against your draft as well, before you publish: `intercom fin simulations run <procedure_id> --workspace <app_id>`, then `intercom fin simulations result <run_id> --workspace <app_id>`. From CLI 0.15.4, `run` tests the unpublished draft when there is one (`--live` tests what customers have now), so a failure here means your edit broke something that used to pass. Simulations catch regressions; the preview above is still how you check the new behaviour.
+**Changing a live Procedure? Check for simulations, and run them if there are any.**
+
+1. `intercom fin simulations list <procedure_id> --workspace <app_id>` shows the Procedure's saved simulations as YAML. If it lists none, skip this check and move on to Step 6.
+2. If it lists some, run them against your draft before you publish: `intercom fin simulations run <procedure_id> --workspace <app_id>`, then `intercom fin simulations result <run_id> --workspace <app_id>`.
+
+From CLI 0.15.4, `run` tests the unpublished draft when there is one (`--live` tests what customers have now), so a failure here means your edit broke something that used to pass. Simulations catch regressions; the preview above is still how you check the new behaviour.
 
 ## Step 6: Publish only when the user says so
 
