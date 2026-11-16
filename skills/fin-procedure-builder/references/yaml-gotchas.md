@@ -14,7 +14,7 @@ Last verified: 6 Nov 2026, Intercom CLI 0.14.1. The CLI 0.15 notes below were ad
 
 **Upload as `state: draft`, then publish separately.** `intercom fin procedures publish <id>` sets it live; `pause` takes it offline; `versions <id>` shows which version is live. Keeping upload and publish separate means you can preview before customers see it.
 
-**Changing a Procedure that's already live (CLI 0.15 and later): keep `state: live`.** The server saves the upload to the Procedure's draft, warns `live_upload_not_promoted`, and leaves what customers get unchanged until you `publish`. `get` shows `has_unpublished_changes: true` meanwhile, and the editor shows "You are viewing unsaved changes"; **Preview changes** previews the draft. Don't switch `state` to `draft` to make a draft: `publish` and `pause` are just "download, set `state`, upload", so `state` is the on/off switch.
+**Changing a Procedure that's already live (CLI 0.15 and later): keep `state: live`.** The server saves the upload to the Procedure's draft, warns `live_upload_not_promoted`, and leaves what customers get unchanged until you `publish`. `get` shows `has_unpublished_changes: true` meanwhile, and the editor shows "You are viewing unsaved changes"; **Preview changes** previews the draft, and from CLI 0.15.4 `fin simulations run` tests the draft too. Don't switch `state` to `draft` to make a draft: leave the live/paused switch to `publish` and `pause`.
 
 ## CLI 0.15.2 quirks
 
@@ -37,7 +37,7 @@ print(norm(yaml.safe_load(open("p.yaml"))) == norm(yaml.safe_load(open("saved.ya
 
 `saved.yaml` is the output of `intercom fin procedures get <id> --workspace <app_id> saved.yaml`. Your file can keep plain-string steps; the server accepts them.
 
-**`procedures publish` can't promote a draft over a live Procedure.** It sets `state: live` and uploads, which the server saves as another draft. Publish from the editor's **Publish to Fin Main** button.
+**Fixed in CLI 0.15.4: `procedures publish` couldn't promote a draft over a live Procedure** on 0.15.2 and 0.15.3. It saved another draft instead, so changes only went live from the editor. On 0.15.4 and later, `publish` does what **Publish to Fin Main** does, and `pause` no longer leaves an extra draft behind.
 
 **`procedures versions` can fail** with "Fin SDK not enabled for this workspace" followed by "Permission denied", in a workspace where `get`, `list` and `upload` work. Use `get` or the editor's version history instead.
 

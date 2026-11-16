@@ -43,4 +43,4 @@ For each test, record: the message you sent, which Procedure ran (from the log),
 
 ## Simulations (optional, automated)
 
-The CLI also has `intercom fin simulations` (`generate`, `upload`, `run`, `result`) for repeatable tests. They're a good regression check once a Procedure is stable. They don't replace the hands-on preview for a new Procedure, because you learn the most from reading Fin's actual replies.
+The CLI also has `intercom fin simulations` (`generate`, `upload`, `run`, `result`) for repeatable tests. They're a good regression check once a Procedure is stable. From CLI 0.15.4, `run` and `generate` test the Procedure's unpublished draft when it has one, so you can check an edit before you publish it; pass `--live` to test the live version instead. They don't replace the hands-on preview for a new Procedure, because you learn the most from reading Fin's actual replies.
